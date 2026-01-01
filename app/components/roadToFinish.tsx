@@ -42,6 +42,7 @@ export function RoadToFinish() {
       try {
         setLoading(true);
         const data = await getMonthlyWalkRunHikeData();
+        console.log("RoadToFinish chart data:", data);
         setChartData(data);
         setError(null);
       } catch (err) {
@@ -97,11 +98,7 @@ export function RoadToFinish() {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => `${value} km`}
-                style={{
-                  marginTop: 12,
-                  marginBottom: 12,
-                  marginLeft: 50,
-                }}
+                domain={[0, "auto"]}
               />
               <ChartTooltip
                 cursor={false}
@@ -119,7 +116,8 @@ export function RoadToFinish() {
                 type="monotone"
                 stroke="var(--color-actual)"
                 strokeWidth={2}
-                dot={false}
+                dot={{ fill: "var(--color-actual)", r: 3 }}
+                activeDot={{ r: 5 }}
               />
               <ChartLegend content={<ChartLegendContent />} />
             </LineChart>

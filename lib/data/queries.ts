@@ -108,8 +108,10 @@ export async function getMonthlyWalkRunHikeData(): Promise<Array<{ month: string
   const monthlyData: Record<string, number> = {}
   
   activities.forEach((activity) => {
-    const date = new Date(activity.start_date)
-    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    // Parse date string (format: YYYY-MM-DD) to avoid timezone issues
+    const dateStr = activity.start_date
+    const [year, month] = dateStr.split('-').map(Number)
+    const monthKey = `${year}-${String(month).padStart(2, '0')}`
     const distance = parseFloat(activity.distance_in_k) || 0
     monthlyData[monthKey] = (monthlyData[monthKey] || 0) + distance
   })
