@@ -144,9 +144,11 @@ export function ShirtHolders() {
                             maximumFractionDigits: 1,
                           })}{" "}
                           km
-                          {distanceValue !== null && distanceValue > 0 && (
+                          {distanceValue !== null && distanceValue > distanceRunnerUpValue && (
                             <span className="ml-1">
-                              ({((distanceValue - distanceRunnerUpValue) / distanceValue * 100).toFixed(1)}% bak)
+                              ({(distanceValue - distanceRunnerUpValue).toLocaleString("no-NO", {
+                                maximumFractionDigits: 1,
+                              })} km bak)
                             </span>
                           )}
                         </div>
@@ -225,9 +227,9 @@ export function ShirtHolders() {
                       {elevationRunnerUpValue !== null && (
                         <div className="text-xs text-red-600 dark:text-red-400">
                           {elevationRunnerUpValue.toLocaleString("no-NO")} m
-                          {elevationValue !== null && elevationValue > 0 && (
+                          {elevationValue !== null && elevationValue > elevationRunnerUpValue && (
                             <span className="ml-1">
-                              ({((elevationValue - elevationRunnerUpValue) / elevationValue * 100).toFixed(1)}% bak)
+                              ({(elevationValue - elevationRunnerUpValue).toLocaleString("no-NO")} m bak)
                             </span>
                           )}
                         </div>
