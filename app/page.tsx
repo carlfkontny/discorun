@@ -8,7 +8,7 @@ import { SkiingLeaderboard } from "./components/leaderboards/skiing-leaderboard"
 
 export default function Home() {
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="w-full max-w-7xl mx-auto py-8 px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
       <h1 className="text-4xl font-bold mb-8 text-center">
         Årets sprekinger - 2026
       </h1>
