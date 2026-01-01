@@ -139,7 +139,7 @@ export async function getMonthlyWalkRunHikeData(): Promise<Array<{ month: string
 // Get walk/run leaderboard
 export async function getWalkRunLeaderboard(): Promise<Array<{ name: string; value: number }>> {
   const activities = await fetchAllActivities({
-    type: ['Run', 'Walk'],
+    type: ['Run', 'Walk', 'Hike'],
     startDate: YEAR_2026_START,
     endDate: YEAR_2026_END,
   })
@@ -163,7 +163,7 @@ export async function getWalkRunLeaderboard(): Promise<Array<{ name: string; val
 // Get elevation leaderboard for walk/run
 export async function getElevationLeaderboard(): Promise<Array<{ name: string; value: number }>> {
   const activities = await fetchAllActivities({
-    type: ['Run', 'Walk'],
+    type: ['Run', 'Walk', 'Hike'],
     startDate: YEAR_2026_START,
     endDate: YEAR_2026_END,
   })

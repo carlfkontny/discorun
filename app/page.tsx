@@ -1,5 +1,6 @@
 import { RoadToFinish } from "./components/roadToFinish";
 import { ProgressCard } from "./components/progress-card";
+import { ShirtHolders } from "./components/shirt-holders";
 import { WalkRunLeaderboard } from "./components/leaderboards/walk-run-leaderboard";
 import { ElevationLeaderboard } from "./components/leaderboards/elevation-leaderboard";
 import { StrengthLeaderboard } from "./components/leaderboards/strength-leaderboard";
@@ -17,6 +18,11 @@ export default function Home() {
         {/* Progress Card */}
         <div className="w-full">
           <ProgressCard />
+        </div>
+
+        {/* Shirt Holders */}
+        <div className="w-full">
+          <ShirtHolders />
         </div>
 
         {/* Road to Finish Chart */}
