@@ -11,6 +11,7 @@ export const ATHLETE_NAMES: Record<number, string> = {
   115334835: "Charlotte",
   29120278: "Miriam",
   87844878: "Silje",
+  1703320: "Birgitte"
 }
 
 export function getAthleteName(athleteId: number): string {
