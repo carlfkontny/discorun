@@ -102,28 +102,28 @@ export function ShirtHolders() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Yellow Shirt - Distance Leader */}
-          <div className="flex flex-col items-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
-            <div className="mb-4">
-              <div className="w-32 h-32 bg-yellow-400 dark:bg-yellow-500 rounded-lg flex items-center justify-center shadow-lg border-4 border-yellow-500 dark:border-yellow-600">
-                <span className="text-6xl">🟡</span>
+          <div className="flex flex-col items-center p-4 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
+            <div className="mb-2">
+              <div className="w-20 h-20 bg-yellow-400 dark:bg-yellow-500 rounded-lg flex items-center justify-center shadow-lg border-4 border-yellow-500 dark:border-yellow-600">
+                <span className="text-4xl">🟡</span>
               </div>
             </div>
             <div className="text-center w-full">
-              <div className="text-sm font-medium text-yellow-900 dark:text-yellow-100 mb-1">
+              <div className="text-sm font-medium text-yellow-900 dark:text-yellow-100 mb-0.5">
                 Gul trøye
               </div>
-              <div className="text-xs text-yellow-700 dark:text-yellow-300 mb-3">
+              <div className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
                 Flest kilometer
               </div>
               {distanceLeader ? (
                 <>
-                  <div className="text-2xl font-bold text-yellow-900 dark:text-yellow-100 mb-1">
+                  <div className="text-xl font-bold text-yellow-900 dark:text-yellow-100 mb-0.5">
                     {distanceLeader}
                   </div>
                   {distanceValue !== null && (
-                    <div className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+                    <div className="text-sm text-yellow-700 dark:text-yellow-300 mb-3">
                       {distanceValue.toLocaleString("no-NO", {
                         maximumFractionDigits: 1,
                       })}{" "}
@@ -131,11 +131,11 @@ export function ShirtHolders() {
                     </div>
                   )}
                   {distanceRunnerUp ? (
-                    <div className="mt-4 pt-4 border-t border-yellow-300 dark:border-yellow-700 w-full text-center">
-                      <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-1">
+                    <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700 w-full text-center">
+                      <div className="text-xs text-yellow-600 dark:text-yellow-400 mb-0.5">
                         Nærmeste utfordrer
                       </div>
-                      <div className="text-lg font-semibold text-yellow-800 dark:text-yellow-200">
+                      <div className="text-base font-semibold text-yellow-800 dark:text-yellow-200">
                         {distanceRunnerUp}
                       </div>
                       {distanceRunnerUpValue !== null && (
@@ -153,7 +153,7 @@ export function ShirtHolders() {
                       )}
                     </div>
                   ) : (
-                    <div className="mt-4 pt-4 border-t border-yellow-300 dark:border-yellow-700 w-full text-center">
+                    <div className="mt-2 pt-2 border-t border-yellow-300 dark:border-yellow-700 w-full text-center">
                       <div className="text-xs text-yellow-600 dark:text-yellow-400 italic">
                         Ingen utfordrer ennå
                       </div>
@@ -169,9 +169,9 @@ export function ShirtHolders() {
           </div>
 
           {/* Dotted Shirt - Elevation Leader */}
-          <div className="flex flex-col items-center p-6 bg-gradient-to-br from-red-50 to-white dark:from-gray-800 dark:to-gray-900 border-2 border-red-400 dark:border-red-600 rounded-lg">
-            <div className="mb-4">
-              <div className="w-32 h-32 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-lg border-4 border-red-500 dark:border-red-600 relative overflow-hidden">
+          <div className="flex flex-col items-center p-4 bg-gradient-to-br from-red-50 to-white dark:from-gray-800 dark:to-gray-900 border-2 border-red-400 dark:border-red-600 rounded-lg">
+            <div className="mb-2">
+              <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center shadow-lg border-4 border-red-500 dark:border-red-600 relative overflow-hidden">
                 <svg
                   className="absolute inset-0 w-full h-full"
                   xmlns="http://www.w3.org/2000/svg"
@@ -198,28 +198,28 @@ export function ShirtHolders() {
               </div>
             </div>
             <div className="text-center w-full">
-              <div className="text-sm font-medium text-red-900 dark:text-red-100 mb-1">
+              <div className="text-sm font-medium text-red-900 dark:text-red-100 mb-0.5">
                 Prikket trøye
               </div>
-              <div className="text-xs text-red-700 dark:text-red-300 mb-3">
+              <div className="text-xs text-red-700 dark:text-red-300 mb-2">
                 Flest høydemeter
               </div>
               {elevationLeader ? (
                 <>
-                  <div className="text-2xl font-bold text-red-900 dark:text-red-100 mb-1">
+                  <div className="text-xl font-bold text-red-900 dark:text-red-100 mb-0.5">
                     {elevationLeader}
                   </div>
                   {elevationValue !== null && (
-                    <div className="text-sm text-red-700 dark:text-red-300 mb-4">
+                    <div className="text-sm text-red-700 dark:text-red-300 mb-3">
                       {elevationValue.toLocaleString("no-NO")} m
                     </div>
                   )}
                   {elevationRunnerUp ? (
-                    <div className="mt-4 pt-4 border-t border-red-300 dark:border-red-700 w-full text-center">
-                      <div className="text-xs text-red-600 dark:text-red-400 mb-1">
+                    <div className="mt-2 pt-2 border-t border-red-300 dark:border-red-700 w-full text-center">
+                      <div className="text-xs text-red-600 dark:text-red-400 mb-0.5">
                         Nærmeste utfordrer
                       </div>
-                      <div className="text-lg font-semibold text-red-800 dark:text-red-200">
+                      <div className="text-base font-semibold text-red-800 dark:text-red-200">
                         {elevationRunnerUp}
                       </div>
                       {elevationRunnerUpValue !== null && (
@@ -234,7 +234,7 @@ export function ShirtHolders() {
                       )}
                     </div>
                   ) : (
-                    <div className="mt-4 pt-4 border-t border-red-300 dark:border-red-700 w-full text-center">
+                    <div className="mt-2 pt-2 border-t border-red-300 dark:border-red-700 w-full text-center">
                       <div className="text-xs text-red-600 dark:text-red-400 italic">
                         Ingen utfordrer ennå
                       </div>
