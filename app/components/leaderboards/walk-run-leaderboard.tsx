@@ -138,7 +138,7 @@ export function WalkRunLeaderboard() {
             Ingen data tilgjengelig
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="min-h-[400px] w-full">
+          <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <BarChart
               accessibilityLayer
               data={data}
