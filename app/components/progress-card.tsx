@@ -1,11 +1,12 @@
 "use client"
 
 import { getTotalWalkRunHikeDistance } from "@/lib/data/queries"
+import { getTotalGoal } from "@/lib/data/goals"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { checkSupabaseConfig } from "@/lib/supabase-debug"
 
-const GOAL_KM = 6500
+const GOAL_KM = getTotalGoal()
 
 export function ProgressCard() {
   const [totalKm, setTotalKm] = useState<number | null>(null)
@@ -48,7 +49,7 @@ export function ProgressCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Progress mot 6500 km</CardTitle>
+        <CardTitle>Progress mot {GOAL_KM.toLocaleString('no-NO')} km</CardTitle>
         <CardDescription>
           Walk, Run og Hike kombinert i 2026
         </CardDescription>
