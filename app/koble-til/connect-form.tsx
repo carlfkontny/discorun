@@ -11,14 +11,16 @@ type Connection = {
   syncError: string | null
 }
 
+type Step = 'pin' | 'authorize' | 'syncing' | 'ready' | 'error'
+
 const ERROR_MESSAGES: Record<string, string> = {
   pin: 'Skriv inn koden før du kobler til Strava.',
-  denied: 'Du avviste tilgangen hos Strava.',
-  state: 'Sesjonen utløp. Prøv å koble til på nytt.',
-  code: 'Manglet autorisasjonskode fra Strava.',
-  scope: 'Du må godta at appen leser øktene dine.',
+  denied: 'Du avviste tilgangen hos Strava. Prøv igjen og godta lesing av økter.',
+  state: 'Sesjonen utløp. Trykk «Godkjenn med Strava» på nytt.',
+  code: 'Manglet autorisasjonskode fra Strava. Prøv å godkjenne på nytt.',
+  scope: 'Du må godta at appen leser øktene dine hos Strava.',
   athlete: 'Fant ikke Strava-profilen.',
-  token: 'Kunne ikke fullføre innloggingen. Prøv å koble til på nytt.',
+  token: 'Kunne ikke fullføre innloggingen. Prøv å godkjenne med Strava på nytt.',
 }
 
 function statusOf(connection: Connection) {
@@ -29,6 +31,39 @@ function statusOf(connection: Connection) {
     return 'error' as const
   }
   return 'loading' as const
+}
+
+function StepList({ current }: { current: Step }) {
+  const items = [
+    { id: 'pin', label: '1. Kode' },
+    { id: 'authorize', label: '2. Strava' },
+    { id: 'sync', label: '3. Økter' },
+  ] as const
+
+  const activeIndex = current === 'pin' ? 0 : current === 'authorize' ? 1 : 2
+
+  return (
+    <ol className="grid grid-cols-3 gap-2 text-center text-xs sm:text-sm">
+      {items.map((item, index) => {
+        const done = index < activeIndex
+        const active = index === activeIndex
+        return (
+          <li
+            key={item.id}
+            className={
+              done
+                ? 'rounded-md bg-green-50 px-2 py-2 font-medium text-green-800'
+                : active
+                  ? 'rounded-md bg-primary px-2 py-2 font-medium text-primary-foreground'
+                  : 'rounded-md bg-muted px-2 py-2 text-muted-foreground'
+            }
+          >
+            {item.label}
+          </li>
+        )
+      })}
+    </ol>
+  )
 }
 
 export function ConnectForm({
@@ -44,19 +79,30 @@ export function ConnectForm({
   const [unlocked, setUnlocked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [syncingId, setSyncingId] = useState<number | null>(initialOk && initialAthleteId ? initialAthleteId : null)
+  const [syncingId, setSyncingId] = useState<number | null>(
+    initialOk && initialAthleteId ? initialAthleteId : null
+  )
   const [error, setError] = useState(initialError ? ERROR_MESSAGES[initialError] ?? initialError : '')
   const [connections, setConnections] = useState<Connection[]>([])
 
-  const focus = useMemo(() => {
-    if (initialAthleteId) {
-      return connections.find((connection) => connection.athleteId === initialAthleteId)
+  const myConnection = useMemo(() => {
+    if (!initialAthleteId) {
+      return undefined
     }
-    return connections.find((connection) => statusOf(connection) !== 'ready') ?? connections[0]
+    return connections.find((connection) => connection.athleteId === initialAthleteId)
   }, [connections, initialAthleteId])
 
-  const focusStatus = focus ? statusOf(focus) : null
-  const waiting = Boolean(syncingId) || focusStatus === 'loading'
+  const myStatus = myConnection ? statusOf(myConnection) : null
+
+  const step: Step = !unlocked
+    ? 'pin'
+    : initialOk && (syncingId || myStatus === 'loading')
+      ? 'syncing'
+      : initialOk && myStatus === 'ready'
+        ? 'ready'
+        : initialOk && myStatus === 'error'
+          ? 'error'
+          : 'authorize'
 
   async function loadConnections() {
     const response = await fetch('/api/strava/connections')
@@ -168,58 +214,75 @@ export function ConnectForm({
     }
   }
 
-  const title = !unlocked
-    ? 'Koble til Strava'
-    : waiting
-      ? 'Henter øktene dine'
-      : focusStatus === 'ready'
-        ? 'Du er i gang'
-        : focusStatus === 'error'
-          ? 'Koblet til, men henting feilet'
-          : 'Koble til Strava'
-
-  const description = !unlocked
-    ? 'Skriv inn den felles koden for å fortsette.'
-    : waiting
-      ? 'Bli i dette vinduet. Ikke trykk «Koble til Strava» på nytt.'
-      : focusStatus === 'ready'
-        ? 'Øktene ligger i dashboardet. Koble til en annen person bare hvis det er noen andre som skal inn.'
-        : focusStatus === 'error'
-          ? 'Strava-kontoen er godkjent. Prøv å hente øktene på nytt — du trenger ikke logge inn hos Strava igjen.'
-          : 'Godkjenn at Discorun leser øktene dine. Vi henter hele 2026.'
+  const copy = {
+    pin: {
+      title: 'Koble til Strava',
+      description: 'Tre steg: felles kode, godkjenning hos Strava, og så henter vi øktene dine for 2026.',
+    },
+    authorize: {
+      title: 'Godkjenn hos Strava',
+      description: 'Du sendes til Strava. Logg inn med din egen konto og godta at Discorun kan lese øktene dine.',
+    },
+    syncing: {
+      title: 'Henter øktene dine',
+      description: 'Bli i dette vinduet. Vi henter hele 2026 — det kan ta et minutt.',
+    },
+    ready: {
+      title: 'Du er med',
+      description: 'Øktene dine ligger i dashboardet.',
+    },
+    error: {
+      title: 'Koblet til, men henting feilet',
+      description: 'Strava-kontoen er godkjent. Prøv å hente øktene på nytt — du trenger ikke logge inn hos Strava igjen.',
+    },
+  }[step]
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+        <CardTitle>{copy.title}</CardTitle>
+        <CardDescription>{copy.description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {waiting && (
+        <StepList current={step === 'error' ? 'syncing' : step} />
+
+        {step === 'authorize' && (
+          <div className="rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-950">
+            <p className="font-medium">Viktig: du må godkjenne hos Strava selv.</p>
+            <p className="mt-1">
+              Det holder ikke å se at andre allerede er med. Trykk knappen under, logg inn med
+              din Strava-konto og godta lesing av økter.
+            </p>
+          </div>
+        )}
+
+        {step === 'syncing' && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
             <p className="font-medium">
-              {focus?.name ? `${focus.name} er koblet til.` : 'Du er koblet til.'} Øktene for 2026 hentes nå.
+              {myConnection?.name ? `${myConnection.name} er godkjent hos Strava.` : 'Du er godkjent hos Strava.'}{' '}
+              Øktene for 2026 hentes nå.
             </p>
-            <p className="mt-1">Bli her til statusen blir ferdig. Det kan ta et minutt.</p>
+            <p className="mt-1">Ikke trykk «Godkjenn med Strava» på nytt.</p>
           </div>
         )}
 
-        {focusStatus === 'ready' && !waiting && (
+        {step === 'ready' && (
           <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-950">
-            <p className="font-medium">Øktene er hentet.</p>
-            <p className="mt-1">Du kan gå til dashboardet. Trykk ikke «Koble til Strava» med mindre en ny person skal inn.</p>
+            <p className="font-medium">
+              {myConnection?.name ? `${myConnection.name}, øktene dine er hentet.` : 'Øktene dine er hentet.'}
+            </p>
+            <p className="mt-1">Du kan gå til dashboardet. En ny person må starte fra «Koble til Strava» selv.</p>
           </div>
         )}
 
-        {focusStatus === 'error' && !waiting && (
+        {step === 'error' && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-950">
             <p className="font-medium">Du er koblet til, men øktene ble ikke hentet.</p>
             <p className="mt-1">Bruk «Hent økter på nytt». Ikke start Strava-innloggingen på nytt.</p>
-            {error && <p className="mt-2 break-words text-xs opacity-80">{error}</p>}
           </div>
         )}
 
-        {error && focusStatus !== 'error' && !waiting && (
+        {error && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-950">
             {error}
           </p>
@@ -227,7 +290,7 @@ export function ConnectForm({
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Laster…</p>
-        ) : !unlocked ? (
+        ) : step === 'pin' ? (
           <form onSubmit={handleUnlock} className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="pin" className="text-sm font-medium">
@@ -246,65 +309,62 @@ export function ConnectForm({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60"
+              className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
             >
-              {submitting ? 'Sjekker…' : 'Lås opp'}
+              {submitting ? 'Sjekker…' : 'Fortsett'}
             </button>
           </form>
         ) : (
           <div className="space-y-5">
-            {waiting && (
+            {step === 'syncing' && (
               <div className="flex items-center gap-3 rounded-md border px-4 py-3 text-sm">
                 <span className="inline-block size-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                 Henter økter fra Strava…
               </div>
             )}
 
-            {focusStatus === 'error' && !waiting && (
+            {step === 'error' && (
               <button
                 type="button"
-                onClick={() => startSync(focus?.athleteId)}
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                onClick={() => startSync(myConnection?.athleteId)}
+                className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
               >
                 Hent økter på nytt
               </button>
             )}
 
-            {focusStatus === 'ready' && !waiting && (
+            {step === 'ready' && (
               <Link
                 href="/"
-                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
               >
                 Gå til dashboardet
               </Link>
             )}
 
-            {!waiting && focusStatus !== 'error' && focusStatus !== 'ready' && (
+            {step === 'authorize' && (
               <a
                 href="/api/strava/authorize"
-                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                className="inline-flex w-full items-center justify-center rounded-md bg-[#fc4c02] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#e34402]"
               >
-                Koble til Strava
+                Godkjenn med Strava
               </a>
             )}
 
-            {connections.length > 0 && (
+            {connections.length > 0 && step === 'authorize' && (
               <div>
-                <h2 className="mb-2 text-sm font-semibold">Status</h2>
+                <h2 className="mb-2 text-sm font-semibold">Allerede med</h2>
+                <p className="mb-2 text-xs text-muted-foreground">
+                  Dette er andre som har godkjent. Du er ikke ferdig før du har gjort det samme.
+                </p>
                 <ul className="divide-y rounded-md border text-sm">
                   {connections.map((connection) => {
                     const status = statusOf(connection)
-                    const label =
-                      syncingId === connection.athleteId || status === 'loading'
-                        ? 'Henter… bli i vinduet'
-                        : status === 'ready'
-                          ? 'Ferdig'
-                          : 'Feilet — hent på nytt'
                     return (
                       <li key={connection.athleteId} className="flex items-center justify-between gap-3 px-3 py-2">
                         <span>{connection.name}</span>
-                        <span className={status === 'error' ? 'text-red-700' : 'text-muted-foreground'}>
-                          {label}
+                        <span className="text-muted-foreground">
+                          {status === 'ready' ? 'Ferdig' : status === 'error' ? 'Feilet' : 'Henter…'}
                         </span>
                       </li>
                     )
@@ -313,7 +373,7 @@ export function ConnectForm({
               </div>
             )}
 
-            {!waiting && (focusStatus === 'ready' || focusStatus === 'error') && (
+            {step === 'ready' && (
               <a href="/api/strava/authorize" className="block text-center text-sm text-muted-foreground underline">
                 Koble til en annen person
               </a>

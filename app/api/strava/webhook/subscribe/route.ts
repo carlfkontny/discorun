@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { clientId, clientSecret, verifyToken } = getStravaConfig()
-  const callbackUrl = `${getAppUrl()}/api/strava/webhook`
+  const callbackUrl = `${getAppUrl(request)}/api/strava/webhook`
 
   const body = new URLSearchParams({
     client_id: clientId,

@@ -4,8 +4,8 @@ import { consumeOAuthState } from '@/lib/strava/pin'
 import { exchangeCodeForTokens, hasRequiredScopes } from '@/lib/strava/oauth'
 import { backfillAthlete, saveAthleteTokens } from '@/lib/strava/sync'
 
-function redirectToConnect(query: string) {
-  return NextResponse.redirect(new URL(`/koble-til?${query}`, getAppUrl()))
+function redirectToConnect(request: Request, query: string) {
+  return NextResponse.redirect(new URL(`/koble-til?${query}`, getAppUrl(request)))
 }
 
 export async function GET(request: Request) {
@@ -16,26 +16,26 @@ export async function GET(request: Request) {
   const state = url.searchParams.get('state')
 
   if (error) {
-    return redirectToConnect('error=denied')
+    return redirectToConnect(request, 'error=denied')
   }
 
   if (!(await consumeOAuthState(state))) {
-    return redirectToConnect('error=state')
+    return redirectToConnect(request, 'error=state')
   }
 
   if (!code) {
-    return redirectToConnect('error=code')
+    return redirectToConnect(request, 'error=code')
   }
 
   if (!hasRequiredScopes(scope)) {
-    return redirectToConnect('error=scope')
+    return redirectToConnect(request, 'error=scope')
   }
 
   try {
     const tokens = await exchangeCodeForTokens(code)
     const athleteId = tokens.athlete?.id
     if (!athleteId) {
-      return redirectToConnect('error=athlete')
+      return redirectToConnect(request, 'error=athlete')
     }
 
     await saveAthleteTokens({
@@ -56,9 +56,9 @@ export async function GET(request: Request) {
       }
     })
 
-    return redirectToConnect(`ok=1&athlete=${athleteId}`)
+    return redirectToConnect(request, `ok=1&athlete=${athleteId}`)
   } catch (callbackError) {
     console.error('Strava callback failed', callbackError)
-    return redirectToConnect('error=token')
+    return redirectToConnect(request, 'error=token')
   }
 }

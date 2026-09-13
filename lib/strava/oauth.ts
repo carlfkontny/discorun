@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto'
+import { getStravaRedirectUri } from './app-url'
 import {
   STRAVA_OAUTH_AUTHORIZE,
   STRAVA_OAUTH_TOKEN,
@@ -12,13 +13,13 @@ export function createOAuthState() {
   return randomBytes(24).toString('hex')
 }
 
-export function buildAuthorizeUrl(state: string) {
-  const { clientId, redirectUri } = getStravaConfig()
+export function buildAuthorizeUrl(state: string, request?: Request) {
+  const { clientId } = getStravaConfig()
   const url = new URL(STRAVA_OAUTH_AUTHORIZE)
   url.searchParams.set('client_id', clientId)
-  url.searchParams.set('redirect_uri', redirectUri)
+  url.searchParams.set('redirect_uri', getStravaRedirectUri(request))
   url.searchParams.set('response_type', 'code')
-  url.searchParams.set('approval_prompt', 'auto')
+  url.searchParams.set('approval_prompt', 'force')
   url.searchParams.set('scope', STRAVA_SCOPES)
   url.searchParams.set('state', state)
   return url.toString()

@@ -6,7 +6,7 @@ Dashboardet leser bare fra tabellen `activities`. Gammel `Zapier`-data brukes ik
 
 1. Ha et Strava-abonnement.
 2. Opprett appen på https://www.strava.com/settings/api
-3. Authorization Callback Domain: `localhost` lokalt, deretter Vercel-domenet i prod.
+3. Authorization Callback Domain: Vercel-domenet i prod, f.eks. `din-app.vercel.app` (uten `https://`). `localhost` bare når du tester lokalt — venner må ha prod-domenet, ellers sendes de til localhost.
 4. Oppgrader til 10 utøvere i API-dashboardet.
 5. Søk Extended Access for alle 13. Inntil det er godkjent kan bare 10 koble til.
 
@@ -19,6 +19,12 @@ Kopier `SUPABASE_SERVICE_ROLE_KEY` fra Project Settings → API. Den skal aldri 
 ## 3. Miljøvariabler
 
 Se `.env.example`. Sett de samme på Vercel.
+
+På Vercel, ikke lim inn localhost-verdier fra `.env.local`.
+
+`NEXT_PUBLIC_APP_URL` i prod:
+
+`https://<ditt-domene>`
 
 `STRAVA_REDIRECT_URI` i prod:
 
