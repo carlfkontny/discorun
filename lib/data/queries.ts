@@ -1,8 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { ATHLETE_NAMES } from './athletes'
+import { getTotalGoal } from './goals'
 
 // Supabase table name - adjust if your table has a different name
-const TABLE_NAME = 'Zapier'
+const TABLE_NAME = 'activities'
 
 const YEAR_2026_START = '2026-01-01'
 const YEAR_2026_END = '2027-01-01'
@@ -119,7 +120,7 @@ export async function getMonthlyWalkRunHikeData(): Promise<Array<{ month: string
   // Create array with cumulative values
   const months = ['2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', 
                   '2026-07', '2026-08', '2026-09', '2026-10', '2026-11', '2026-12']
-  const targetPerMonth = 6500 / 12
+  const targetPerMonth = getTotalGoal() / 12
 
   let cumulativeActual = 0
   let cumulativeTarget = 0
@@ -191,7 +192,7 @@ export async function getStrengthWorkoutsLeaderboard(): Promise<Array<{ name: st
   
   const activities = await fetchAllActivities({
     type: strengthTypes,
-    movingTimeMin: 30,
+    movingTimeMin: 1800, // Strava moving_time is seconds (30 minutes)
     startDate: YEAR_2026_START,
     endDate: YEAR_2026_END,
   })

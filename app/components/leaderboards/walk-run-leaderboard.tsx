@@ -24,6 +24,7 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { chartHeightForRows } from "../leaderboard";
 
 interface LeaderboardDataWithGoal {
   name: string;
@@ -106,7 +107,7 @@ export function WalkRunLeaderboard() {
 
   if (loading) {
     return (
-      <Card className="md:col-span-2">
+      <Card className="min-w-0 md:col-span-2 2xl:col-span-2">
         <CardContent className="pt-6">
           <div className="text-muted-foreground text-sm">Laster...</div>
         </CardContent>
@@ -116,7 +117,7 @@ export function WalkRunLeaderboard() {
 
   if (error) {
     return (
-      <Card className="md:col-span-2">
+      <Card className="min-w-0 md:col-span-2 2xl:col-span-2">
         <CardContent className="pt-6">
           <div className="text-destructive text-sm">Feil: {error}</div>
         </CardContent>
@@ -125,30 +126,35 @@ export function WalkRunLeaderboard() {
   }
 
   return (
-    <Card className="md:col-span-2">
-      <CardHeader>
-        <CardTitle>Flest km Walk/Run/Hike</CardTitle>
+    <Card className="min-w-0 md:col-span-2 2xl:col-span-2">
+      <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-lg leading-snug">Flest km Walk/Run/Hike</CardTitle>
         <CardDescription>
           Totalt antall kilometer gått og løpt i 2026 med individuelle mål
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0 px-4 sm:px-6">
         {data.length === 0 ? (
           <div className="text-muted-foreground text-sm">
             Ingen data tilgjengelig
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto w-full min-w-0"
+            style={{ height: chartHeightForRows(data.length) }}
+          >
             <BarChart
               accessibilityLayer
               data={data}
               layout="vertical"
-              barCategoryGap="8%"
+              barCategoryGap={8}
+              barSize={22}
               margin={{
-                left: 0,
-                right: 20,
-                top: 12,
-                bottom: 12,
+                left: 4,
+                right: 16,
+                top: 4,
+                bottom: 8,
               }}
             >
               <CartesianGrid horizontal={false} />
@@ -165,9 +171,10 @@ export function WalkRunLeaderboard() {
                 type="category"
                 tickLine={false}
                 axisLine={false}
-                width={120}
+                width={88}
                 tick={{ fontSize: 12 }}
-                tickMargin={10}
+                tickMargin={8}
+                interval={0}
               />
               <ChartTooltip
                 cursor={false}

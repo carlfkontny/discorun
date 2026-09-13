@@ -1,0 +1,26 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { isAuthorizedCron } from '@/lib/strava/cron-auth'
+import { backfillAllAthletes, backfillAthlete } from '@/lib/strava/sync'
+
+export const maxDuration = 60
+
+export async function GET(request: NextRequest) {
+  if (!isAuthorizedCron(request)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const athleteId = request.nextUrl.searchParams.get('athlete_id')
+
+  try {
+    if (athleteId) {
+      const result = await backfillAthlete(Number(athleteId))
+      return NextResponse.json({ ok: true, results: [result] })
+    }
+
+    const results = await backfillAllAthletes()
+    return NextResponse.json({ ok: true, results })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Sync failed'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}

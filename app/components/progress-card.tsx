@@ -47,7 +47,7 @@ export function ProgressCard() {
   const remaining = totalKm !== null ? Math.max(GOAL_KM - totalKm, 0) : GOAL_KM
 
   return (
-    <Card>
+    <Card className="min-w-0 xl:h-full">
       <CardHeader>
         <CardTitle>Progress mot {GOAL_KM.toLocaleString('no-NO')} km</CardTitle>
         <CardDescription>
@@ -56,16 +56,29 @@ export function ProgressCard() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-muted-foreground">Laster...</div>
+          <div className="text-muted-foreground text-sm">Laster...</div>
         ) : error ? (
-          <div className="text-destructive">Feil: {error}</div>
+          <div className="text-destructive text-sm">Feil: {error}</div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold">{totalKm?.toLocaleString('no-NO', { maximumFractionDigits: 1 })}</span>
-              <span className="text-muted-foreground text-lg">/ {GOAL_KM.toLocaleString('no-NO')} km</span>
+          <div className="space-y-5">
+            <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-4">
+              <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+                <span className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                  {totalKm?.toLocaleString('no-NO', { maximumFractionDigits: 1 })}
+                </span>
+                <span className="text-muted-foreground text-base sm:text-lg">
+                  / {GOAL_KM.toLocaleString('no-NO')} km
+                </span>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {remaining > 0 ? (
+                  <span>{remaining.toLocaleString('no-NO', { maximumFractionDigits: 1 })} km gjenstår</span>
+                ) : (
+                  <span className="font-medium text-primary">Målet er nådd</span>
+                )}
+              </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Fremgang</span>
@@ -73,18 +86,10 @@ export function ProgressCard() {
               </div>
               <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full bg-primary transition-all duration-500"
+                  className="h-full rounded-full bg-primary transition-all duration-500"
                   style={{ width: `${percentage}%` }}
                 />
               </div>
-            </div>
-
-            <div className="pt-2 text-sm text-muted-foreground">
-              {remaining > 0 ? (
-                <span>Gjenstår: {remaining.toLocaleString('no-NO', { maximumFractionDigits: 1 })} km</span>
-              ) : (
-                <span className="font-medium text-primary">Mål oppnådd! 🎉</span>
-              )}
             </div>
           </div>
         )}

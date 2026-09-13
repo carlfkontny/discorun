@@ -18,6 +18,7 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { getMonthlyWalkRunHikeData } from "@/lib/data/queries";
+import { getTotalGoal } from "@/lib/data/goals";
 
 const chartConfig = {
   target: {
@@ -42,7 +43,6 @@ export function RoadToFinish() {
       try {
         setLoading(true);
         const data = await getMonthlyWalkRunHikeData();
-        console.log("RoadToFinish chart data:", data);
         setChartData(data);
         setError(null);
       } catch (err) {
@@ -58,11 +58,11 @@ export function RoadToFinish() {
   }, []);
 
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
         <CardTitle>Road to Finish</CardTitle>
         <CardDescription>
-          Kumulativ progresjon mot 6500 km mål i 2026
+          Kumulativ progresjon mot {getTotalGoal().toLocaleString("no-NO")} km i 2026
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -75,7 +75,7 @@ export function RoadToFinish() {
             Ingen data tilgjengelig
           </div>
         ) : (
-          <ChartContainer config={chartConfig} className="w-full max-h-[300px]">
+          <ChartContainer config={chartConfig} className="aspect-auto h-[240px] w-full min-w-0 max-h-[260px] sm:h-[260px]">
             <LineChart
               accessibilityLayer
               data={chartData}

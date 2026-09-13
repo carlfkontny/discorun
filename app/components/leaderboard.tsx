@@ -28,6 +28,10 @@ interface LeaderboardProps {
   color?: string
 }
 
+export function chartHeightForRows(count: number) {
+  return Math.max(220, count * 40 + 32)
+}
+
 export function Leaderboard({ title, description, data, unit, color = "var(--chart-1)" }: LeaderboardProps) {
   const chartConfig = {
     value: {
@@ -36,7 +40,6 @@ export function Leaderboard({ title, description, data, unit, color = "var(--cha
     },
   } satisfies ChartConfig
 
-  // Format value based on unit
   const formatValue = (value: number) => {
     if (unit === 'km') {
       return `${value.toLocaleString('no-NO', { maximumFractionDigits: 1 })} km`
@@ -48,24 +51,30 @@ export function Leaderboard({ title, description, data, unit, color = "var(--cha
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
+    <Card className="h-full min-w-0">
+      <CardHeader className="px-4 sm:px-6">
+        <CardTitle className="text-lg leading-snug">{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent>
+      <CardContent className="min-w-0 overflow-x-auto px-4 sm:px-6">
         {data.length === 0 ? (
           <div className="text-muted-foreground text-sm">Ingen data tilgjengelig</div>
         ) : (
-          <ChartContainer config={chartConfig}>
+          <ChartContainer
+            config={chartConfig}
+            className="aspect-auto w-full min-w-0"
+            style={{ height: chartHeightForRows(data.length) }}
+          >
             <BarChart
               data={data}
               layout="vertical"
+              barCategoryGap={8}
+              barSize={22}
               margin={{
-                left: 0,
-                right: 12,
-                top: 12,
-                bottom: 12,
+                left: 4,
+                right: 8,
+                top: 4,
+                bottom: 4,
               }}
             >
               <CartesianGrid horizontal={false} />
@@ -75,8 +84,9 @@ export function Leaderboard({ title, description, data, unit, color = "var(--cha
                 type="category"
                 tickLine={false}
                 axisLine={false}
-                width={100}
-                tickFormatter={(value) => value.length > 15 ? value.slice(0, 15) + '...' : value}
+                width={88}
+                tick={{ fontSize: 12 }}
+                interval={0}
               />
               <ChartTooltip
                 cursor={false}
@@ -85,7 +95,7 @@ export function Leaderboard({ title, description, data, unit, color = "var(--cha
               <Bar
                 dataKey="value"
                 fill="var(--color-value)"
-                radius={[0, 4, 4, 0]}
+                radius={[0, 6, 6, 0]}
               />
             </BarChart>
           </ChartContainer>
@@ -94,4 +104,3 @@ export function Leaderboard({ title, description, data, unit, color = "var(--cha
     </Card>
   )
 }
-
