@@ -355,16 +355,33 @@ export function ConnectForm({
               <div>
                 <h2 className="mb-2 text-sm font-semibold">Allerede med</h2>
                 <p className="mb-2 text-xs text-muted-foreground">
-                  Dette er andre som har godkjent. Du er ikke ferdig før du har gjort det samme.
+                  Nye personer må godkjenne hos Strava. Allerede tilkoblede kan hente nye økter uten å logge inn igjen.
                 </p>
                 <ul className="divide-y rounded-md border text-sm">
                   {connections.map((connection) => {
                     const status = statusOf(connection)
+                    const isSyncing = syncingId === connection.athleteId
                     return (
                       <li key={connection.athleteId} className="flex items-center justify-between gap-3 px-3 py-2">
                         <span>{connection.name}</span>
-                        <span className="text-muted-foreground">
-                          {status === 'ready' ? 'Ferdig' : status === 'error' ? 'Feilet' : 'Henter…'}
+                        <span className="flex shrink-0 items-center gap-2">
+                          <span className={status === 'error' ? 'text-red-700' : 'text-muted-foreground'}>
+                            {isSyncing
+                              ? 'Henter…'
+                              : status === 'ready'
+                                ? 'Ferdig'
+                                : status === 'error'
+                                  ? 'Feilet'
+                                  : 'Henter…'}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={Boolean(syncingId)}
+                            onClick={() => startSync(connection.athleteId)}
+                            className="text-xs font-medium text-primary underline disabled:opacity-50"
+                          >
+                            Hent nye
+                          </button>
                         </span>
                       </li>
                     )

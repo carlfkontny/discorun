@@ -6,8 +6,18 @@ import type { StravaAthleteRow, StravaSummaryActivity } from './types'
 
 const TOKEN_REFRESH_SKEW_MS = 60_000
 
-async function sleep(ms: number) {
+export async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+function toError(error: unknown, fallback: string) {
+  if (error instanceof Error) {
+    return error
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return new Error(String((error as { message: unknown }).message))
+  }
+  return new Error(fallback)
 }
 
 export async function getAthlete(athleteId: number): Promise<StravaAthleteRow | null> {
@@ -18,7 +28,7 @@ export async function getAthlete(athleteId: number): Promise<StravaAthleteRow | 
     .maybeSingle()
 
   if (error) {
-    throw error
+    throw toError(error, `Could not load athlete ${athleteId}`)
   }
 
   return data
@@ -31,7 +41,7 @@ export async function listAthletes(): Promise<StravaAthleteRow[]> {
     .order('firstname', { ascending: true })
 
   if (error) {
-    throw error
+    throw toError(error, 'Could not list athletes')
   }
 
   return data ?? []
@@ -54,39 +64,42 @@ export async function getValidAccessToken(athlete: StravaAthleteRow): Promise<st
     .eq('athlete_id', athlete.athlete_id)
 
   if (error) {
-    throw error
+    throw toError(error, `Could not save refreshed token for ${athlete.athlete_id}`)
   }
 
   return tokens.access_token
 }
 
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504])
+
 async function stravaGet<T>(path: string, accessToken: string): Promise<T | null> {
-  const response = await stravaFetch(`${STRAVA_API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
+  let lastStatus = 0
+  let lastBody = ''
 
-  if (response.status === 404) {
-    return null
-  }
-
-  if (response.status === 429) {
-    await sleep(2000)
-    const retry = await stravaFetch(`${STRAVA_API_BASE}${path}`, {
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    const response = await stravaFetch(`${STRAVA_API_BASE}${path}`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!retry.ok) {
-      const text = await retry.text()
-      throw new Error(`Strava ${path} failed after retry: ${retry.status} ${text}`)
+
+    if (response.status === 404) {
+      return null
     }
-    return retry.json()
+
+    if (response.ok) {
+      return response.json()
+    }
+
+    lastStatus = response.status
+    lastBody = await response.text()
+
+    if (!RETRYABLE_STATUSES.has(response.status) || attempt === 4) {
+      break
+    }
+
+    await sleep(1000 * attempt * (response.status === 429 ? 2 : 1))
   }
 
-  if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`Strava ${path} failed: ${response.status} ${text}`)
-  }
-
-  return response.json()
+  throw new Error(`Strava ${path} failed: ${lastStatus} ${lastBody}`)
 }
 
 export async function listAthleteActivities(
@@ -120,4 +133,37 @@ export async function getActivityById(
   activityId: number
 ): Promise<StravaSummaryActivity | null> {
   return stravaGet<StravaSummaryActivity>(`/activities/${activityId}`, accessToken)
+}
+
+export async function getActivityByIdWithRetry(
+  accessToken: string,
+  activityId: number,
+  attempts = 5
+): Promise<StravaSummaryActivity | null> {
+  let lastError: unknown
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      const activity = await getActivityById(accessToken, activityId)
+      if (activity) {
+        return activity
+      }
+    } catch (error) {
+      lastError = error
+      const message = error instanceof Error ? error.message : ''
+      if (!/\b(429|502|503|504)\b/.test(message)) {
+        throw error
+      }
+    }
+
+    if (attempt < attempts) {
+      await sleep(1500 * attempt)
+    }
+  }
+
+  if (lastError) {
+    throw lastError
+  }
+
+  return null
 }

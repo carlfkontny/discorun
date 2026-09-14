@@ -34,6 +34,8 @@ På Vercel, ikke lim inn localhost-verdier fra `.env.local`.
 
 `CRON_SECRET` er en tilfeldig streng. Vercel sender den som `Authorization: Bearer <CRON_SECRET>` mot `/api/strava/sync`.
 
+Nattlig og manuell synk henter bare økter siden forrige `last_synced_at` (pluss 48 timer overlapp). Første synk for en ny person henter hele 2026. Tving full synk med `?full=1`.
+
 ## 4. Webhook
 
 Etter deploy, én gang:

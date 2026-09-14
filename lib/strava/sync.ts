@@ -1,13 +1,37 @@
 import { getSupabaseAdmin } from '@/lib/supabase-server'
+import { YEAR_2026_START_UNIX } from './env'
 import {
-  getActivityById,
+  getActivityByIdWithRetry,
   getAthlete,
   getValidAccessToken,
   listAthleteActivities,
   listAthletes,
 } from './client'
 import { mapStravaActivity } from './map-activity'
-import type { ActivityRow, StravaWebhookEvent } from './types'
+import type { ActivityRow, StravaAthleteRow, StravaWebhookEvent } from './types'
+
+const INCREMENTAL_OVERLAP_SECONDS = 48 * 60 * 60
+
+function errorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message)
+  }
+  return fallback
+}
+
+function afterTimestamp(athlete: StravaAthleteRow, full?: boolean) {
+  if (full || !athlete.last_synced_at) {
+    return YEAR_2026_START_UNIX
+  }
+
+  const fromLastSync =
+    Math.floor(new Date(athlete.last_synced_at).getTime() / 1000) - INCREMENTAL_OVERLAP_SECONDS
+
+  return Math.max(YEAR_2026_START_UNIX, fromLastSync)
+}
 
 async function upsertActivities(rows: ActivityRow[]) {
   if (rows.length === 0) {
@@ -19,11 +43,11 @@ async function upsertActivities(rows: ActivityRow[]) {
     .upsert(rows, { onConflict: 'strava_activity_id' })
 
   if (error) {
-    throw error
+    throw new Error(error.message)
   }
 }
 
-export async function backfillAthlete(athleteId: number) {
+export async function backfillAthlete(athleteId: number, options?: { full?: boolean }) {
   const athlete = await getAthlete(athleteId)
   if (!athlete) {
     throw new Error(`No connected athlete ${athleteId}`)
@@ -31,7 +55,8 @@ export async function backfillAthlete(athleteId: number) {
 
   try {
     const accessToken = await getValidAccessToken(athlete)
-    const activities = await listAthleteActivities(accessToken)
+    const after = afterTimestamp(athlete, options?.full)
+    const activities = await listAthleteActivities(accessToken, after)
     const rows = activities
       .map((activity) => mapStravaActivity(activity, athleteId))
       .filter((row): row is ActivityRow => row !== null)
@@ -47,32 +72,32 @@ export async function backfillAthlete(athleteId: number) {
       .eq('athlete_id', athleteId)
 
     if (error) {
-      throw error
+      throw new Error(error.message)
     }
 
-    return { athleteId, count: rows.length }
+    return { athleteId, count: rows.length, after }
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown sync error'
+    const message = errorMessage(error, 'Unknown sync error')
     await getSupabaseAdmin()
       .from('strava_athletes')
       .update({ sync_error: message })
       .eq('athlete_id', athleteId)
-    throw error
+    throw error instanceof Error ? error : new Error(message)
   }
 }
 
-export async function backfillAllAthletes() {
+export async function backfillAllAthletes(options?: { full?: boolean }) {
   const athletes = await listAthletes()
-  const results: Array<{ athleteId: number; count?: number; error?: string }> = []
+  const results: Array<{ athleteId: number; count?: number; after?: number; error?: string }> = []
 
   for (const athlete of athletes) {
     try {
-      const result = await backfillAthlete(athlete.athlete_id)
+      const result = await backfillAthlete(athlete.athlete_id, options)
       results.push(result)
     } catch (error) {
       results.push({
         athleteId: athlete.athlete_id,
-        error: error instanceof Error ? error.message : 'Unknown sync error',
+        error: errorMessage(error, 'Unknown sync error'),
       })
     }
   }
@@ -125,10 +150,9 @@ export async function handleWebhookEvent(event: StravaWebhookEvent) {
   }
 
   const accessToken = await getValidAccessToken(athlete)
-  const activity = await getActivityById(accessToken, event.object_id)
+  const activity = await getActivityByIdWithRetry(accessToken, event.object_id, 3)
   if (!activity) {
-    await deleteActivity(event.object_id)
-    return
+    throw new Error(`Strava activity ${event.object_id} was not available after retries`)
   }
 
   const row = mapStravaActivity(activity, event.owner_id)
